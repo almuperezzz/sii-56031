@@ -10,6 +10,10 @@
 #include <string.h>
 #include <math.h>
 
+#include <fcntl.h>
+#include <unistd.h>
+#define FIFO "/tmp/FIFO_LOGGER"
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -21,7 +25,7 @@ CMundo::CMundo()
 
 CMundo::~CMundo()
 {
-
+  close(fd_fifo);
 }
 
 void CMundo::InitGL()
@@ -135,6 +139,10 @@ void CMundo::OnTimer(int value)
 		esfera.velocidad.x=2+2*rand()/(float)RAND_MAX;
 		esfera.velocidad.y=2+2*rand()/(float)RAND_MAX;
 		puntos2++;
+		
+		char cad[100];
+		sprintf(cad, "Jugador 2 marca 1 punto y lleva un total de %d puntos.\n", puntos2);
+		write(fd_fifo ,cad, strlen(cad));
 	}
 
 	if(fondo_dcho.Rebota(esfera))
@@ -144,8 +152,14 @@ void CMundo::OnTimer(int value)
 		esfera.velocidad.x=-2-2*rand()/(float)RAND_MAX;
 		esfera.velocidad.y=-2-2*rand()/(float)RAND_MAX;
 		puntos1++;
+		
+		char cad[100];
+		sprintf(cad, "Jugador 1 marca 1 punto y lleva un total de %d puntos. \n", puntos1);
+		write(fd_fifo ,cad, strlen(cad));
+		
 	}
-
+  if (puntos1 >= 3 || puntos2 >=3)
+  exit(0);
 }
 
 void CMundo::OnKeyboardDown(unsigned char key, int x, int y)
@@ -192,4 +206,8 @@ void CMundo::Init()
 	jugador2.g=0;
 	jugador2.x1=6;jugador2.y1=-1;
 	jugador2.x2=6;jugador2.y2=1;
+	
+	fd_fifo = open(FIFO, O_WRONLY);
+	if (fd_fifo < 0)
+	    perror("No se puede abrir el FIFO");
 }
